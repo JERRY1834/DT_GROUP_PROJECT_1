@@ -2919,7 +2919,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 447204, guid: d0fd0f7701890024daee0118098286c8, type: 3}
       propertyPath: m_LocalPosition.y
+<<<<<<< Updated upstream
       value: -1.62
+=======
+      value: -0.34
+>>>>>>> Stashed changes
       objectReference: {fileID: 0}
     - target: {fileID: 447204, guid: d0fd0f7701890024daee0118098286c8, type: 3}
       propertyPath: m_LocalPosition.z
@@ -12501,8 +12505,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1578812812}
   serializedVersion: 2
+<<<<<<< Updated upstream
   m_LocalRotation: {x: -0, y: -0, z: 0.93821156, w: 0.34606227}
   m_LocalPosition: {x: -2.593, y: -0.2, z: -4.119}
+=======
+  m_LocalRotation: {x: -0, y: -0, z: 0.38211316, w: 0.9241156}
+  m_LocalPosition: {x: -1.9717, y: -0.775, z: 0.991}
+>>>>>>> Stashed changes
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
