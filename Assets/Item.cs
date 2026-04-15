@@ -14,7 +14,7 @@ public class Item : ScriptableObject
     [SerializeField] private string description;
 
     public string ItemId => itemId;
-    public string ItemName => itemName;
+    public string ItemName => string.IsNullOrEmpty(itemName) ? name : itemName;
     public Sprite Icon => icon;
     public string Description => description;
 
@@ -23,6 +23,11 @@ public class Item : ScriptableObject
         if (string.IsNullOrEmpty(itemId))
         {
             itemId = name.Replace(" ", "_").ToLower();
+        }
+
+        if (string.IsNullOrEmpty(itemName))
+        {
+            itemName = name;
         }
     }
 }

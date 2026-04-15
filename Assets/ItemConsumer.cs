@@ -123,6 +123,12 @@ public abstract class ItemConsumer : MonoBehaviour
             return;
         }
 
+        if (requiredItem == null)
+        {
+            Debug.LogError($"ItemConsumer 在 {gameObject.name} 上的 requiredItem 未设置");
+            return;
+        }
+
         // 检查是否是正确物品
         if (selectedItem.ItemId == requiredItem.ItemId)
         {

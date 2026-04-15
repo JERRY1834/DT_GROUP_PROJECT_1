@@ -98,6 +98,13 @@ public class InventoryItemEntityManager : MonoBehaviour
     /// </summary>
     public GameObject CheckoutItem(Item item)
     {
+        // 检查玩家/摄像机是否就绪
+        if (player == null)
+        {
+            Debug.LogError("[InventoryItemEntityManager] 无法获取玩家变换，主摄像机未初始化");
+            return null;
+        }
+
         ItemEntityPair pair = FindPairByItem(item);
         if (pair == null)
         {

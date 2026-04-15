@@ -12,6 +12,7 @@ using UnityEngine;
 public class CollectibleItem : MonoBehaviour
 {
     [SerializeField] private Item itemData;
+    [SerializeField] private bool destroyAfterCollection = true;
 
     private bool hasBeenCollected = false;
 
@@ -47,8 +48,15 @@ public class CollectibleItem : MonoBehaviour
                 entityMgr.RegisterItem(itemData, gameObject, this);
             }
 
-            // 隐藏实体（不销毁）
-            gameObject.SetActive(false);
+            // 从场景移除
+            if (destroyAfterCollection)
+            {
+                Destroy(gameObject);
+            }
+            else
+            {
+                gameObject.SetActive(false);
+            }
         }
     }
 

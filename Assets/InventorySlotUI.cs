@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// 背包物品槽UI - 代表背包中的一个物品
@@ -12,13 +13,31 @@ public class InventorySlotUI : MonoBehaviour
     private InventoryUIManager uiManager;
     private Button button;
     private Image icon;
-    private Text itemName;
+    
+    // 支持两种文本组件类型
+    private Text legacyText;
+    private TextMeshProUGUI tmpText;
 
     private void Awake()
     {
         button = GetComponent<Button>();
         icon = GetComponent<Image>();
-        itemName = GetComponentInChildren<Text>();
+        
+        // 尝试获取 TextMeshPro 文本
+        tmpText = GetComponentInChildren<TextMeshProUGUI>();
+        
+        // 如果没有 TMP，尝试获取旧版 Text 组件
+        if (tmpText == null)
+        {
+            legacyText = GetComponentInChildren<Text>();
+        }
+
+        if (button == null)
+            Debug.LogWarning("InventorySlotUI: 找不到 Button 组件", gameObject);
+        if (icon == null)
+            Debug.LogWarning("InventorySlotUI: 找不到 Image 组件", gameObject);
+        if (tmpText == null && legacyText == null)
+            Debug.LogWarning("InventorySlotUI: 找不到 Text 或 TextMeshProUGUI 组件", gameObject);
     }
 
     /// <summary>
@@ -26,92 +45,97 @@ public class InventorySlotUI : MonoBehaviour
     /// </summary>
     public void Initialize(Item itemData, InventoryUIManager manager)
     {
+        if (itemData == null)
+        {
+            Debug.LogError("InventorySlotUI: 尝试初始化空物品数据", gameObject);
+            return;
+        }
+
+        if (manager == null)
+        {
+            Debug.LogError("InventorySlotUI: UIManager 为空", gameObject);
+            return;
+        }
+
         item = itemData;
         uiManager = manager;
 
+        Debug.Log($"[InventorySlotUI] 初始化物品槽: {itemData.ItemName}", gameObject);
+
         // 设置图标
-        if (icon != null && item.Icon != null)
+        if (icon != null)
         {
-            icon.sprite = item.Icon;
+            if (item.Icon != null)
+            {
+                icon.sprite = item.Icon;
+            }
+            else
+            {
+                Debug.LogWarning($"[InventorySlotUI] 物品 {item.ItemName} 没有图标");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[InventorySlotUI] Image 组件为空，无法设置图标", gameObject);
         }
 
-        // 设置文字
-        if (itemName != null)
-        {
-            itemName.text = item.ItemName;
-        }
+        // 设置物品名称
+        SetItemName(item.ItemName);
 
         // 按钮点击事件
         if (button != null)
         {
             button.onClick.AddListener(OnSlotClicked);
         }
+        else
+        {
+            Debug.LogWarning("[InventorySlotUI] Button 组件为空，无法添加点击事件", gameObject);
+        }
     }
 
     /// <summary>
-    /// 点击槽位 - 检出对应的实体到玩家面前
+    /// 设置物品名称文本
     /// </summary>
-    private void OnSlotClicked()
+    private void SetItemName(string name)
     {
-        // 从映射管理器检出物品对应的实体
-        InventoryItemEntityManager entityMgr = InventoryItemEntityManager.Instance;
-        if (entityMgr == null)
+        if (tmpText != null)
         {
-            Debug.LogError("[InventorySlotUI] 致命错误：无法获取 InventoryItemEntityManager 实例");
-            return;
+            tmpText.text = name;
+            Debug.Log($"[InventorySlotUI] 设置物品名称（TMP）: {name}");
         }
-
-        GameObject entity = entityMgr.CheckoutItem(item);
-        if (entity == null)
+        else if (legacyText != null)
         {
-            Debug.LogWarning($"[InventorySlotUI] 无法检出物品（可能未正确注册）: {item.ItemName}");
-            return;
-        }
-
-        // 为该实体设置回调，以便后续的成功/失败交互
-        SetupEntityCallbacks(entity, item);
-
-        // 关闭背包 UI，让玩家可以交互
-        uiManager.Close();
-
-        Debug.Log($"[InventorySlotUI] 已检出物品: {item.ItemName}");
-    }
-
-    /// <summary>
-    /// 为实体设置交互回调
-    /// </summary>
-    private void SetupEntityCallbacks(GameObject entity, Item item)
-    {
-        // 如果是钟表零件
-        ClockPart clockPart = entity.GetComponent<ClockPart>();
-        if (clockPart != null)
-        {
-            // 成功安装 → 删除物品
-            clockPart.SetOnInstalledCallback(() =>
-            {
-                InventoryItemEntityManager entityMgr = InventoryItemEntityManager.Instance;
-                if (entityMgr != null)
-                {
-                    entityMgr.RemoveItem(item);
-                    Debug.Log($"[InventorySlotUI] 物品成功交互，已从背包移除: {item.ItemName}");
-                }
-            });
-
-            // 返回/失败 → 隐藏实体，保留背包物品
-            clockPart.SetOnReturnedCallback(() =>
-            {
-                InventoryItemEntityManager entityMgr = InventoryItemEntityManager.Instance;
-                if (entityMgr != null)
-                {
-                    entityMgr.ReturnItem(item);
-                    Debug.Log($"[InventorySlotUI] 物品返回背包: {item.ItemName}");
-                }
-            });
+            legacyText.text = name;
+            Debug.Log($"[InventorySlotUI] 设置物品名称（Legacy）: {name}");
         }
         else
         {
-            // 普通物品或其他类型 - 可在此添加其他交互逻辑
-            Debug.Log($"[InventorySlotUI] 检出物品（非特殊交互）: {item.ItemName}");
+            Debug.LogWarning("[InventorySlotUI] Text 组件为空，无法设置物品名称", gameObject);
+        }
+    }
+
+    /// <summary>
+    /// 点击槽位 - 直接使用物品
+    /// </summary>
+    private void OnSlotClicked()
+    {
+        if (uiManager == null)
+        {
+            Debug.LogWarning("InventorySlotUI: UIManager 未初始化");
+            return;
+        }
+
+        ItemConsumer mechanism = uiManager.GetCurrentMechanism();
+        
+        if (mechanism != null)
+        {
+            // 有打开背包的机关存在，尝试使用物品
+            mechanism.UseItem(item);
+        }
+        else
+        {
+            // 没有机关在使用，只是查看物品
+            Debug.Log($"查看物品: {item.ItemName}");
         }
     }
 

@@ -116,6 +116,13 @@ public class ClockPartInventoryManager : MonoBehaviour
             return null;
         }
 
+        // 检查玩家/摄像机是否就绪
+        if (player == null)
+        {
+            Debug.LogError("[ClockPartInventoryManager] 无法获取玩家变换，主摄像机未初始化");
+            return null;
+        }
+
         // 在玩家面前生成实体（克隆模板）
         Vector3 spawnPos = player.position + player.forward * spawnDistance + Vector3.up * spawnHeightOffset;
         GameObject instance = Instantiate(template, spawnPos, Quaternion.identity);

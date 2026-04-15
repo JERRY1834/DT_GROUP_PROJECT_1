@@ -76,6 +76,12 @@ public class InventoryUIManager : MonoBehaviour
     /// </summary>
     public void Toggle()
     {
+        if (inventoryPanel == null)
+        {
+            Debug.LogError("InventoryUIManager: inventoryPanel 为空，无法切换");
+            return;
+        }
+
         if (inventoryPanel.activeInHierarchy)
         {
             Close();
@@ -114,8 +120,25 @@ public class InventoryUIManager : MonoBehaviour
     /// </summary>
     private void RefreshUI(Item changedItem)
     {
-        if (itemContainer == null || itemSlotPrefab == null)
+        if (itemContainer == null)
+        {
+            Debug.LogError("InventoryUIManager: itemContainer 为空，无法刷新UI");
             return;
+        }
+
+        if (itemSlotPrefab == null)
+        {
+            Debug.LogError("InventoryUIManager: itemSlotPrefab 未指定，无法创建物品槽", gameObject);
+            return;
+        }
+
+        // 验证预制体是否有 InventorySlotUI 组件
+        InventorySlotUI prefabSlotComponent = itemSlotPrefab.GetComponent<InventorySlotUI>();
+        if (prefabSlotComponent == null)
+        {
+            Debug.LogError("InventoryUIManager: itemSlotPrefab 上缺少 InventorySlotUI 组件", itemSlotPrefab);
+            return;
+        }
 
         // 清除旧槽位
         foreach (InventorySlotUI slot in slots)
@@ -127,11 +150,20 @@ public class InventoryUIManager : MonoBehaviour
         // 创建新槽位
         InventoryManager inventoryMgr = InventoryManager.Instance;
         if (inventoryMgr == null)
+        {
+            Debug.LogError("InventoryUIManager: InventoryManager 实例为空");
             return;
+        }
 
         List<Item> items = inventoryMgr.GetAllItems();
         foreach (Item item in items)
         {
+            if (item == null)
+            {
+                Debug.LogWarning("InventoryUIManager: 背包中发现空物品");
+                continue;
+            }
+
             GameObject slotGO = Instantiate(itemSlotPrefab, itemContainer);
             InventorySlotUI slot = slotGO.GetComponent<InventorySlotUI>();
 
