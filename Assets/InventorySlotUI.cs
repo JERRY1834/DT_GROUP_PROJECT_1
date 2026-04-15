@@ -49,21 +49,69 @@ public class InventorySlotUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 点击槽位 - 直接使用物品
+    /// 点击槽位 - 检出对应的实体到玩家面前
     /// </summary>
     private void OnSlotClicked()
     {
-        ItemConsumer mechanism = uiManager.GetCurrentMechanism();
-        
-        if (mechanism != null)
+        // 从映射管理器检出物品对应的实体
+        InventoryItemEntityManager entityMgr = InventoryItemEntityManager.Instance;
+        if (entityMgr == null)
         {
-            // 有打开背包的机关存在，尝试使用物品
-            mechanism.UseItem(item);
+            Debug.LogError("[InventorySlotUI] 致命错误：无法获取 InventoryItemEntityManager 实例");
+            return;
+        }
+
+        GameObject entity = entityMgr.CheckoutItem(item);
+        if (entity == null)
+        {
+            Debug.LogWarning($"[InventorySlotUI] 无法检出物品（可能未正确注册）: {item.ItemName}");
+            return;
+        }
+
+        // 为该实体设置回调，以便后续的成功/失败交互
+        SetupEntityCallbacks(entity, item);
+
+        // 关闭背包 UI，让玩家可以交互
+        uiManager.Close();
+
+        Debug.Log($"[InventorySlotUI] 已检出物品: {item.ItemName}");
+    }
+
+    /// <summary>
+    /// 为实体设置交互回调
+    /// </summary>
+    private void SetupEntityCallbacks(GameObject entity, Item item)
+    {
+        // 如果是钟表零件
+        ClockPart clockPart = entity.GetComponent<ClockPart>();
+        if (clockPart != null)
+        {
+            // 成功安装 → 删除物品
+            clockPart.SetOnInstalledCallback(() =>
+            {
+                InventoryItemEntityManager entityMgr = InventoryItemEntityManager.Instance;
+                if (entityMgr != null)
+                {
+                    entityMgr.RemoveItem(item);
+                    Debug.Log($"[InventorySlotUI] 物品成功交互，已从背包移除: {item.ItemName}");
+                }
+            });
+
+            // 返回/失败 → 隐藏实体，保留背包物品
+            clockPart.SetOnReturnedCallback(() =>
+            {
+                InventoryItemEntityManager entityMgr = InventoryItemEntityManager.Instance;
+                if (entityMgr != null)
+                {
+                    entityMgr.ReturnItem(item);
+                    Debug.Log($"[InventorySlotUI] 物品返回背包: {item.ItemName}");
+                }
+            });
         }
         else
         {
-            // 没有机关在使用，只是查看物品
-            Debug.Log($"查看物品: {item.ItemName}");
+            // 普通物品或其他类型 - 可在此添加其他交互逻辑
+            Debug.Log($"[InventorySlotUI] 检出物品（非特殊交互）: {item.ItemName}");
         }
     }
 

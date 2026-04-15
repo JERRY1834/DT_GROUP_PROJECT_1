@@ -29,6 +29,10 @@ public class ClockPart : MonoBehaviour
     private Transform targetSlot = null;
     private Rigidbody rb;
 
+    // 回调函数
+    private System.Action onInstalledCallback;
+    private System.Action onReturnedCallback;
+
     /// <summary>
     /// 零件类型（外部可读取）
     /// </summary>
@@ -118,5 +122,64 @@ public class ClockPart : MonoBehaviour
 
         // 安装完成后隐藏零件（由钟表上的展示模型替代显示）
         gameObject.SetActive(false);
+
+        // 触发安装成功回调
+        onInstalledCallback?.Invoke();
+    }
+
+    /// <summary>
+    /// 重置零件状态（用于克隆时恢复到未安装状态）
+    /// </summary>
+    public void ResetState()
+    {
+        isInstalled = false;
+        targetSlot = null;
+        
+        // 重新启用 XR 抓取
+        var grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.XRGrabInteractable>();
+        if (grabInteractable != null)
+        {
+            grabInteractable.enabled = true;
+        }
+
+        // 重新启用物理
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+        }
+
+        // 重新启用碰撞体
+        var collider = GetComponent<Collider>();
+        if (collider != null)
+            collider.enabled = true;
+
+        // 确保物体是激活的
+        if (!gameObject.activeInHierarchy)
+            gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// 设置安装成功时的回调
+    /// </summary>
+    public void SetOnInstalledCallback(System.Action callback)
+    {
+        onInstalledCallback = callback;
+    }
+
+    /// <summary>
+    /// 设置需要回收时的回调
+    /// </summary>
+    public void SetOnReturnedCallback(System.Action callback)
+    {
+        onReturnedCallback = callback;
+    }
+
+    /// <summary>
+    /// 触发返回回调（当玩家主动收回该物品或未成功交互时调用）
+    /// </summary>
+    public void TriggerReturnedCallback()
+    {
+        onReturnedCallback?.Invoke();
     }
 }
